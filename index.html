@@ -228,7 +228,10 @@
   const currentBowler = () => teams[bowling].players.find(p => !p.out) || teams[bowling].players[0];
   const allOut = idx => teams[idx].players.every(p => p.out);
   const scoreTotal = idx => teams[idx].score;
-  const strikePair = (batter, bowler) => Math.abs(batter-bowler) === 1 || (batter === 1 && bowler === 6);
+  const strikePair = (batter, bowler) =>
+  Math.abs(batter - bowler) === 1 ||
+  (batter === 1 && bowler === 6) ||
+  (batter === 6 && bowler === 1);
 
   function resetMatch() {
     teams = []; tossParity = null; tossWinner = 0; batting = 0; bowling = 1;
