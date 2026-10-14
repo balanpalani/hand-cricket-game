@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Baseball Hand Cricket</title>
+<style>
+  :root {
+    --navy:#14213d; --blue:#246bfd; --green:#19a974; --gold:#ffca3a;
+    --bg:#f3f6fc; --card:#ffffff; --muted:#667085; --red:#e94f64;
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    background:radial-gradient(circle at top left,#e4edff 0,transparent 35%),var(--bg);
+    color:var(--navy); min-height:100vh;
+  }
+  .wrap { max-width:1050px; margin:0 auto; padding:24px 16px 40px; }
+  header { text-align:center; margin-bottom:22px; }
+  .logo { font-size:42px; }
+  h1 { margin:4px 0; font-size:clamp(28px,5vw,42px); letter-spacing:-1px; }
+  .subtitle { color:var(--muted); margin:6px 0 0; }
+  .panel { background:var(--card); border:1px solid #e3e9f4; border-radius:20px; padding:22px; box-shadow:0 12px 35px #14213d0c; margin:16px 0; }
+  h2 { margin:0 0 14px; font-size:22px; }
+  h3 { margin:0 0 8px; font-size:17px; }
+  .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+  .field { display:flex; flex-direction:column; gap:7px; margin-bottom:13px; }
+  label { font-weight:700; font-size:14px; }
+  input, select { width:100%; padding:12px 13px; border:1px solid #d7deeb; border-radius:11px; font:inherit; background:#fff; color:var(--navy); }
+  .btn { border:0; border-radius:12px; padding:12px 17px; background:var(--blue); color:#fff; font-weight:800; font:inherit; cursor:pointer; transition:transform .12s,opacity .12s; }
+  .btn:hover { transform:translateY(-1px); }
+  .btn:disabled { opacity:.4; cursor:not-allowed; transform:none; }
+  .btn.secondary { background:#eaf0ff; color:var(--navy); }
+  .btn.green { background:var(--green); }
+  .btn.gold { background:var(--gold); color:#332600; }
+  .btn.red { background:var(--red); }
+  .hidden { display:none !important; }
+  .hint { font-size:13px; color:var(--muted); line-height:1.5; }
+  .team-card { border:1px solid #e2e8f2; background:#fbfcff; border-radius:15px; padding:16px; }
+  .team-top { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
+  .team-dot { width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:7px;background:var(--blue); }
+  .team-dot.red { background:var(--red); }
+  .choice-row { display:flex; gap:9px; flex-wrap:wrap; }
+  .choice-row .btn { min-width:58px; }
+  .scoreboard { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+  .scorebox { border-radius:16px; padding:17px; background:#f7f9ff; border:1px solid #e4eaf5; }
+  .scorebox.active { border:2px solid var(--blue); background:#eef4ff; }
+  .score-label { font-weight:800; color:var(--muted); font-size:13px; text-transform:uppercase; letter-spacing:.6px; }
+  .score { font-size:clamp(30px,6vw,44px); font-weight:900; letter-spacing:-1px; margin:5px 0; }
+  .small { font-size:13px; color:var(--muted); }
+  .status { padding:14px 16px; background:#eef4ff; border-radius:13px; margin:14px 0; line-height:1.5; }
+  .number-grid { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:9px; }
+  .number { font-size:23px; font-weight:900; padding:16px 0; border-radius:14px; border:2px solid #dce5f6; background:#fff; color:var(--navy); cursor:pointer; }
+  .number:hover { border-color:var(--blue); background:#f0f5ff; }
+  .number.selected { background:var(--blue); color:#fff; border-color:var(--blue); }
+  .number:disabled { opacity:.45; cursor:not-allowed; }
+  .number-grid .number { box-shadow:0 5px 12px #14213d0d; transition:transform .15s, box-shadow .15s, border-color .15s; }
+  .number-grid .number:not(:disabled):hover { transform:translateY(-2px); box-shadow:0 8px 18px #246bfd20; }
+  .team-card { transition:border-color .2s, box-shadow .2s; }
+  .play-area .team-card { border-width:2px; }
+  .play-area .team-card:first-child { border-color:#c9d9ff; background:linear-gradient(145deg,#f7faff,#fff); }
+  .play-area .team-card:last-child { border-color:#ffd3d8; background:linear-gradient(145deg,#fff8f8,#fff); }
+  .status { border:1px solid #dce7ff; }
+  .number-grid { margin-top:14px; }
+  .pick-state { min-height:22px; font-weight:800; color:var(--blue); }
+  .auto-badge { display:inline-flex; align-items:center; gap:6px; padding:7px 11px; border-radius:999px; background:#e8f8f1; color:#087f5b; font-size:12px; font-weight:800; }
+  .number:focus-visible,.btn:focus-visible { outline:3px solid #a8c4ff; outline-offset:2px; }
+  .play-area { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .player-tag { display:inline-block; border-radius:99px; padding:6px 10px; background:#edf1f8; font-size:13px; font-weight:800; margin:3px 0 12px; }
+  .event { font-weight:800; }
+  .event.strike { color:#bd3449; }
+  .event.runs { color:#087f5b; }
+  .log { max-height:190px; overflow:auto; padding-left:20px; margin:8px 0 0; }
+  .log li { padding:5px 0; font-size:13px; color:#475467; }
+  .rules { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+  .rule { background:#f7f9ff; border-radius:12px; padding:13px; font-size:13px; line-height:1.5; }
+  .rule strong { display:block; font-size:14px; margin-bottom:4px; }
+  .center { text-align:center; }
+  .toss-choice { display:flex; gap:10px; flex-wrap:wrap; }
+  .toss-choice .btn { flex:1; }
+  footer { text-align:center; color:var(--muted); font-size:12px; margin-top:22px; }
+  @media(max-width:650px) {
+    .grid,.scoreboard,.play-area { grid-template-columns:1fr; }
+    .rules { grid-template-columns:1fr; }
+    .panel { padding:16px; }
+    .number-grid { gap:6px; }
+    .number { padding:13px 0; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">⚾</div>
+    <h1>Baseball Hand Cricket</h1>
+    <p class="subtitle">Pick 1–6 • Build your score • Survive three consecutive strikes</p>
+  </header>
+
+  <section id="setup" class="panel">
+    <h2>🏟️ Set up your match</h2>
+    <div class="grid">
+      <div class="team-card">
+        <div class="team-top"><h3><span class="team-dot"></span>Team A</h3></div>
+        <div class="field"><label for="teamAName">Team name</label><input id="teamAName" value="Blue Rockets" maxlength="24"></div>
+        <div class="field"><label for="teamACount">Number of players</label><input id="teamACount" type="number" min="1" max="20" value="3"></div>
+      </div>
+      <div class="team-card">
+        <div class="team-top"><h3><span class="team-dot red"></span>Team B</h3></div>
+        <div class="field"><label for="teamBName">Team name</label><input id="teamBName" value="Red Comets" maxlength="24"></div>
+        <div class="field"><label for="teamBCount">Number of players</label><input id="teamBCount" type="number" min="1" max="20" value="3"></div>
+      </div>
+    </div>
+    <p class="hint">Prototype note: both teams take turns on the same device. Each player is out after 3 consecutive strikes.</p>
+    <button class="btn green" id="startBtn">Continue to toss →</button>
+  </section>
+
+  <section id="toss" class="panel hidden">
+    <h2>🪙 Odd / Even toss</h2>
+    <p id="tossIntro">Team A chooses Odd or Even. The other team gets the opposite choice.</p>
+    <div class="grid">
+      <div class="team-card">
+        <h3 id="tossTeamTitle">Team A, choose odd or even</h3>
+        <div class="toss-choice">
+          <button class="btn secondary" data-parity="Odd">Odd</button>
+          <button class="btn secondary" data-parity="Even">Even</button>
+        </div>
+        <p class="hint" id="tossSelection">Choose one to continue.</p>
+      </div>
+      <div class="team-card">
+        <h3>Pick your toss number</h3>
+        <p class="hint">Both teams choose a number from 1 to 6. If the sum matches Team A's chosen parity, Team A wins; otherwise Team B wins.</p>
+        <div class="field"><label for="tossA">Team A number</label><select id="tossA"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select></div>
+        <div class="field"><label for="tossB">Team B number</label><select id="tossB"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select></div>
+        <button class="btn" id="tossBtn" disabled>Flip toss</button>
+      </div>
+    </div>
+    <div id="tossResult" class="status hidden"></div>
+    <div id="tossAction" class="hidden center"><button class="btn green" id="batFirstBtn">Choose batting / bowling →</button></div>
+  </section>
+
+  <section id="choose" class="panel hidden">
+    <h2>🏏 Toss winner's choice</h2>
+    <p id="winnerChoiceText"></p>
+    <div class="choice-row">
+      <button class="btn green" id="batFirst">Bat first</button>
+      <button class="btn" id="bowlFirst">Bowl first</button>
+    </div>
+  </section>
+
+  <section id="game" class="hidden">
+    <section class="panel">
+      <div class="scoreboard">
+        <div id="scoreABox" class="scorebox"><div class="score-label" id="scoreALabel">Team A</div><div class="score" id="scoreA">0</div><div class="small" id="scoreAInfo">0 / 3 players out</div></div>
+        <div id="scoreBBox" class="scorebox"><div class="score-label" id="scoreBLabel">Team B</div><div class="score" id="scoreB">0</div><div class="small" id="scoreBInfo">0 / 3 players out</div></div>
+      </div>
+      <div class="status" id="matchStatus">Match ready.</div>
+      <div class="grid">
+        <div><span class="player-tag" id="inningsTag">Innings 1</span><span class="player-tag" id="targetTag">Target: —</span></div>
+        <div class="center"><span class="player-tag">Consecutive strikes: <strong id="strikeCount">0 / 3</strong></span></div>
+      </div>
+    </section>
+    <section class="panel">
+      <h2>🎮 Simultaneous showdown</h2>
+      <p class="hint">Both players choose independently using their own side. Your selected number stays hidden. When both picks are locked, the result appears and the next ball starts automatically after 2 seconds.</p>
+      <div class="play-area">
+        <div class="team-card">
+          <h3>🏏 Batter</h3>
+          <p id="batterInfo" class="hint">Current batter</p>
+          <div id="batterNumbers" class="number-grid"></div>
+          <p class="hint pick-state" id="batterPickHint">Choose secretly • waiting for your pick</p>
+        </div>
+        <div class="team-card">
+          <h3>⚾ Bowler</h3>
+          <p id="bowlerInfo" class="hint">Current bowler</p>
+          <div id="bowlerNumbers" class="number-grid"></div>
+          <p class="hint pick-state" id="bowlerPickHint">Choose secretly • waiting for your pick</p>
+        </div>
+      </div>
+      <div class="status" id="turnResult">Both players: choose a number at the same time. Picks stay hidden until both are locked in.</div>
+      <div class="choice-row">
+        <span class="auto-badge">⚡ Automatic next ball in 2 seconds</span>
+        <button class="btn red" id="restartBtn">Restart match</button>
+      </div>
+    </section>
+    <section class="panel">
+      <h2>📋 Match log</h2>
+      <ol id="matchLog" class="log"><li>Match started.</li></ol>
+    </section>
+  </section>
+
+  <section id="result" class="panel hidden center">
+    <div style="font-size:48px">🏆</div>
+    <h2 id="resultTitle">Match over</h2>
+    <p id="resultText"></p>
+    <button class="btn green" id="playAgainBtn">Play again</button>
+  </section>
+
+  <section class="panel">
+    <h2>📘 Rules</h2>
+    <div class="rules">
+      <div class="rule"><strong>🟢 Normal score</strong>Different numbers, unless a strike pair: add the batter's number only.</div>
+      <div class="rule"><strong>🟰 Same number</strong>Both numbers count. Example: 4 and 4 = 8 runs.</div>
+      <div class="rule"><strong>🔴 Strike</strong>Bowler picks batter number −1 or +1. Special wrap: batter 1 / bowler 6 is also a strike.</div>
+      <div class="rule"><strong>3 strikes in a row</strong>That batter is out. The strike counter resets for the next batter.</div>
+      <div class="rule"><strong>Reset streak</strong>If the turn is not a strike, the consecutive strike counter resets to zero.</div>
+      <div class="rule"><strong>Innings end</strong>When all players on the batting team are out. Each team gets one innings.</div>
+    </div>
+  </section>
+  <footer>Made as a browser prototype • Works on desktop and mobile • No account or server required</footer>
+</div>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  let teams = [];
+  let tossParity = null, tossWinner = 0, batting = 0, bowling = 1;
+  let innings = 1, strikeStreak = 0, batterPick = null, bowlerPick = null;
+  let tossDone = false, gameOver = false, logItems = [];
+  let resolving = false, ballTimer = null;
+
+  const show = id => $(id).classList.remove('hidden');
+  const hide = id => $(id).classList.add('hidden');
+  const addLog = text => {
+    logItems.unshift(text);
+    $('matchLog').innerHTML = logItems.slice(0,35).map(x => `<li>${escapeHtml(x)}</li>`).join('');
+  };
+  const escapeHtml = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const currentBatter = () => teams[batting].players.find(p => !p.out);
+  const currentBowler = () => teams[bowling].players.find(p => !p.out) || teams[bowling].players[0];
+  const allOut = idx => teams[idx].players.every(p => p.out);
+  const scoreTotal = idx => teams[idx].score;
+  const strikePair = (batter, bowler) => Math.abs(batter-bowler) === 1 || (batter === 1 && bowler === 6);
+
+  function resetMatch() {
+    teams = []; tossParity = null; tossWinner = 0; batting = 0; bowling = 1;
+    innings = 1; strikeStreak = 0; batterPick = null; bowlerPick = null;
+    tossDone = false; gameOver = false; logItems = []; resolving = false;
+    if (ballTimer) clearTimeout(ballTimer); ballTimer = null;
+    $('turnResult').textContent = 'Both players: choose a number at the same time. Picks stay hidden until both are locked in.';
+    ['setup','toss','choose','game','result'].forEach(hide); show('setup');
+  }
+
+  $('startBtn').addEventListener('click', () => {
+    const nameA = $('teamAName').value.trim() || 'Team A';
+    const nameB = $('teamBName').value.trim() || 'Team B';
+    const countA = Number($('teamACount').value), countB = Number($('teamBCount').value);
+    if (!Number.isInteger(countA) || !Number.isInteger(countB) || countA < 1 || countB < 1 || countA > 20 || countB > 20) {
+      alert('Each team must have between 1 and 20 players.'); return;
+    }
+    teams = [
+      {name:nameA, players:Array.from({length:countA},(_,i)=>({name:`Player ${i+1}`,out:false})), score:0, outCount:0},
+      {name:nameB, players:Array.from({length:countB},(_,i)=>({name:`Player ${i+1}`,out:false})), score:0, outCount:0}
+    ];
+    hide('setup'); show('toss');
+    $('tossTeamTitle').textContent = `${teams[0].name}: choose Odd or Even`;
+    $('tossSelection').textContent = 'Choose Odd or Even.';
+    $('tossResult').classList.add('hidden'); hide('tossAction');
+    $('tossBtn').disabled = true;
+  });
+
+  document.querySelectorAll('[data-parity]').forEach(btn => btn.addEventListener('click', () => {
+    tossParity = btn.dataset.parity;
+    $('tossSelection').textContent = `${teams[0].name} selected ${tossParity}. ${teams[1].name} gets ${tossParity === 'Odd' ? 'Even' : 'Odd'}.`;
+    $('tossBtn').disabled = false;
+    document.querySelectorAll('[data-parity]').forEach(b => b.classList.toggle('gold', b === btn));
+  }));
+
+  $('tossBtn').addEventListener('click', () => {
+    if (!tossParity) return;
+    const a = Number($('tossA').value), b = Number($('tossB').value);
+    const sum = a+b, parity = sum % 2 ? 'Odd' : 'Even';
+    tossWinner = parity === tossParity ? 0 : 1;
+    tossDone = true;
+    $('tossResult').classList.remove('hidden');
+    $('tossResult').innerHTML = `<strong>Toss numbers:</strong> ${teams[0].name} = ${a}, ${teams[1].name} = ${b}. Total = ${sum} (${parity}).<br><strong>${teams[tossWinner].name} wins the toss!</strong>`;
+    show('tossAction');
+    $('tossBtn').disabled = true;
+  });
+
+  $('batFirstBtn').addEventListener('click', () => {
+    hide('toss'); show('choose');
+    $('winnerChoiceText').textContent = `${teams[tossWinner].name}, choose whether to bat or bowl first.`;
+  });
+
+  $('batFirst').addEventListener('click', () => startGame(tossWinner, 1-tossWinner));
+  $('bowlFirst').addEventListener('click', () => startGame(1-tossWinner, tossWinner));
+
+  function startGame(firstBatting, firstBowling) {
+    batting = firstBatting; bowling = firstBowling; innings = 1; strikeStreak = 0;
+    hide('choose'); show('game');
+    logItems = [];
+    addLog(`${teams[batting].name} chose to bat first.`);
+    addLog(`Toss won by ${teams[tossWinner].name}.`);
+    renderGame();
+  }
+
+  function makeNumberButtons(containerId, type) {
+    const container = $(containerId);
+    container.innerHTML = '';
+    for (let n=1;n<=6;n++) {
+      const btn = document.createElement('button');
+      btn.className = 'number'; btn.textContent = n; btn.type = 'button';
+      btn.addEventListener('click', () => chooseNumber(type,n));
+      container.appendChild(btn);
+    }
+  }
+
+  function renderGame() {
+    if (gameOver) return;
+    $('scoreALabel').textContent = teams[0].name;
+    $('scoreBLabel').textContent = teams[1].name;
+    $('scoreA').textContent = teams[0].score;
+    $('scoreB').textContent = teams[1].score;
+    $('scoreAInfo').textContent = `${teams[0].outCount} / ${teams[0].players.length} players out`;
+    $('scoreBInfo').textContent = `${teams[1].outCount} / ${teams[1].players.length} players out`;
+    $('scoreABox').classList.toggle('active', batting===0);
+    $('scoreBBox').classList.toggle('active', batting===1);
+    $('inningsTag').textContent = `Innings ${innings} — ${teams[batting].name} batting`;
+    $('targetTag').textContent = innings===2 ? `Target: ${teams[1-batting].score+1}` : 'Target: —';
+    $('strikeCount').textContent = `${strikeStreak} / 3`;
+    const batter = currentBatter();
+    const bowler = currentBowler();
+    $('batterInfo').textContent = batter ? `${teams[batting].name} • ${batter.name}` : 'No batter left';
+    $('bowlerInfo').textContent = `${teams[bowling].name} • ${bowler ? bowler.name : 'Bowler'}`;
+    $('batterPickHint').textContent = batterPick === null ? 'Choose secretly • waiting for your pick' : '🔒 Pick locked in • hidden';
+    $('bowlerPickHint').textContent = bowlerPick === null ? 'Choose secretly • waiting for your pick' : '🔒 Pick locked in • hidden';
+    makeNumberButtons('batterNumbers','batter');
+    makeNumberButtons('bowlerNumbers','bowler');
+    [...$('batterNumbers').children].forEach(btn => {
+      btn.disabled = batterPick !== null || !batter || resolving;
+    });
+    [...$('bowlerNumbers').children].forEach(btn => {
+      btn.disabled = bowlerPick !== null || !batter || resolving;
+    });
+    $('matchStatus').textContent = resolving ? 'Ball complete — showing result… next ball starts automatically.' : `${teams[batting].name} are batting. ${teams[bowling].name} are bowling. Both players can choose now.`;
+  }
+
+  function chooseNumber(type,n) {
+    if (gameOver || resolving) return;
+    if (type==='batter' && batterPick===null) batterPick=n;
+    if (type==='bowler' && bowlerPick===null) bowlerPick=n;
+    // Re-render only updates each side's own lock state; the chosen value is never shown.
+    renderGame();
+    if (batterPick!==null && bowlerPick!==null) resolveBall();
+  }
+
+  function resolveBall() {
+    if (resolving || batterPick===null || bowlerPick===null || gameOver) return;
+    resolving = true;
+    const b=batterPick, w=bowlerPick, team=teams[batting], batter=currentBatter();
+    if (!batter) { resolving=false; finishInnings(); return; }
+    let msg='';
+    if (b===w) {
+      team.score += b+w; strikeStreak=0;
+      msg=`${team.name} — ${batter.name}: same number ${b}; +${b+w} runs.`;
+      $('turnResult').innerHTML = `<span class="event runs">🟢 SAME NUMBER! ${b} + ${w} = ${b+w} runs.</span>`;
+    } else if (strikePair(b,w)) {
+      strikeStreak++;
+      msg=`${team.name} — ${batter.name}: strike ${strikeStreak}/3 (${b} vs ${w}); no runs.`;
+      if (strikeStreak>=3) {
+        batter.out=true; team.outCount++; strikeStreak=0;
+        msg += ` ${batter.name} is OUT!`;
+        $('turnResult').innerHTML = `<span class="event strike">🔴 STRIKE OUT! ${b} vs ${w}. ${batter.name} is OUT after 3 consecutive strikes.</span>`;
+      } else {
+        $('turnResult').innerHTML = `<span class="event strike">🔴 STRIKE! ${b} vs ${w}. No runs • streak ${strikeStreak}/3.</span>`;
+      }
+    } else {
+      team.score += b; strikeStreak=0;
+      msg=`${team.name} — ${batter.name}: no strike; +${b} run${b===1?'':'s'}.`;
+      $('turnResult').innerHTML = `<span class="event runs">🏃 SAFE! Batter scores ${b} run${b===1?'':'s'}.</span>`;
+    }
+    addLog(msg);
+    renderGame();
+    // Keep the revealed result visible for 2 seconds, then automatically prepare the next ball.
+    ballTimer = setTimeout(() => {
+      ballTimer = null;
+      resolving = false;
+      batterPick=null; bowlerPick=null;
+      if (gameOver) return;
+      if (innings===2 && teams[batting].score > teams[bowling].score) {
+        endMatch(); return;
+      }
+      if (allOut(batting)) {
+        finishInnings(); return;
+      }
+      $('turnResult').textContent = 'New ball! Both players choose a number at the same time. Picks stay hidden until both are locked in.';
+      renderGame();
+    }, 2000);
+  }
+
+  function finishInnings() {
+    if (innings===1) {
+      addLog(`${teams[batting].name} all out for ${teams[batting].score}. Innings 1 complete.`);
+      batting=1-batting; bowling=1-bowling; innings=2; strikeStreak=0; batterPick=null; bowlerPick=null;
+      $('turnResult').textContent=`Innings 1 complete. ${teams[batting].name} need ${teams[bowling].score+1} runs to win.`;
+      renderGame();
+      if (allOut(batting)) endMatch();
+    } else {
+      addLog(`${teams[batting].name} all out for ${teams[batting].score}.`);
+      endMatch();
+    }
+  }
+
+  function endMatch() {
+    gameOver=true; resolving=false;
+    if (ballTimer) clearTimeout(ballTimer); ballTimer=null;
+    hide('game'); show('result');
+    const a=teams[0].score, b=teams[1].score;
+    if (a===b) {
+      $('resultTitle').textContent='🤝 Match tied!';
+      $('resultText').textContent=`${teams[0].name} ${a} — ${teams[1].name} ${b}.`;
+    } else {
+      const winner=a>b?teams[0]:teams[1], margin=Math.abs(a-b);
+      $('resultTitle').textContent=`🏆 ${winner.name} win!`;
+      $('resultText').textContent=`Final score: ${teams[0].name} ${a} — ${teams[1].name} ${b}. ${winner.name} win by ${margin} run${margin===1?'':'s'}.`;
+    }
+  }
+
+  $('restartBtn').addEventListener('click', () => {
+    if (confirm('Restart this match? All current scores will be lost.')) resetMatch();
+  });
+  $('playAgainBtn').addEventListener('click', resetMatch);
+  resetMatch();
+})();
+</script>
+</body>
+</html>
