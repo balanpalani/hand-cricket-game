@@ -113,7 +113,7 @@
         <div class="field"><label for="teamBCount">Number of players</label><input id="teamBCount" type="number" min="1" max="20" value="3"></div>
       </div>
     </div>
-    <p class="hint">Keyboard only: Team A uses top-row keys 1–6; Team B uses NumPad 1–6. Press Enter to continue. Each player is out after 3 consecutive strikes.</p>
+    <p class="hint">Keyboard only: Team A uses top-row keys 1–6; Team B uses A, S, D, F, G, H (mapped to 1–6). Press Enter to continue. Each player is out after 3 consecutive strikes.</p>
     <button class="btn green" id="startBtn">Continue to toss →</button>
   </section>
 
@@ -131,7 +131,7 @@
       </div>
       <div class="team-card">
         <h3>Pick your toss number</h3>
-        <p class="hint">Team A: top-row 1–6. Team B: NumPad 1–6. Press Enter after both numbers are chosen.</p>
+        <p class="hint">Team A: top-row 1–6. Team B: A, S, D, F, G, H = 1–6. Press Enter after both numbers are chosen.</p>
         <div class="field"><label for="tossA">Team A number</label><select id="tossA"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select></div>
         <div class="field"><label for="tossB">Team B number</label><select id="tossB"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select></div>
         <button class="btn" id="tossBtn" disabled>Flip toss</button>
@@ -164,7 +164,7 @@
     </section>
     <section class="panel">
       <h2>🎮 Simultaneous showdown</h2>
-      <p class="hint">Keyboard only: Batter uses top-row 1–6; Bowler uses NumPad 1–6. Your selected number stays hidden. When both picks are locked, the result appears and the next ball starts automatically after 2 seconds.</p>
+      <p class="hint">Keyboard only: Batter uses top-row 1–6; Bowler uses A, S, D, F, G, H (mapped to 1–6). Your selected number stays hidden. When both picks are locked, the result appears and the next ball starts automatically after 2 seconds.</p>
       <div class="play-area">
         <div class="team-card">
           <h3>🏏 Batter</h3>
@@ -431,15 +431,17 @@
 
   // Keyboard-only controls:
   // Setup: edit fields with keyboard, then press Enter while not editing a field.
-  // Toss: O=Odd, E=Even; Team A top-row 1-6; Team B NumPad 1-6; Enter confirms.
+  // Toss: O=Odd, E=Even; Team A top-row 1-6; Team B A/S/D/F/G/H = 1-6; Enter confirms.
   // Toss winner choice: B=bat first, W=bowl first.
-  // Gameplay: Batter top-row 1-6; Bowler NumPad 1-6. R restarts; Enter on results resets.
+  // Gameplay: Batter top-row 1-6; Bowler A/S/D/F/G/H = 1-6. R restarts; Enter on results resets.
   document.addEventListener('keydown', (e) => {
     if (e.repeat) return;
     const key = e.key.toLowerCase();
     const top = /^[1-6]$/.test(e.key) && /^Digit[1-6]$/.test(e.code);
-    const pad = /^Numpad[1-6]$/.test(e.code);
-    const num = top ? Number(e.key) : (pad ? Number(e.code.slice(-1)) : null);
+    // Use A/S/D/F/G/H for the second player so laptops without a numpad work too.
+    const bowlerKeys = { a:1, s:2, d:3, f:4, g:5, h:6 };
+    const secondPlayer = Object.prototype.hasOwnProperty.call(bowlerKeys, key);
+    const num = top ? Number(e.key) : (secondPlayer ? bowlerKeys[key] : null);
 
     if (!$('setup').classList.contains('hidden')) {
       if (e.key === 'Enter' && !['teamAName','teamACount','teamBName','teamBCount'].includes(document.activeElement?.id)) {
@@ -458,12 +460,12 @@
       }
       if (num !== null && top && !tossNumAChosen) {
         e.preventDefault(); $('tossA').value = String(num); tossNumAChosen = true;
-        $('tossSelection').textContent += ` Team A number locked: ${num}.`;
+        $('tossSelection').textContent += ' Team A number locked (hidden).';
         return;
       }
-      if (num !== null && pad && !tossNumBChosen) {
+      if (num !== null && secondPlayer && !tossNumBChosen) {
         e.preventDefault(); $('tossB').value = String(num); tossNumBChosen = true;
-        $('tossSelection').textContent += ` Team B number locked: ${num}.`;
+        $('tossSelection').textContent += ' Team B number locked (hidden).';
         return;
       }
       if (e.key === 'Enter') {
@@ -486,7 +488,7 @@
       if (num !== null) {
         e.preventDefault();
         if (top) chooseNumber('batter', num);
-        else if (pad) chooseNumber('bowler', num);
+        else if (secondPlayer) chooseNumber('bowler', num);
       }
       return;
     }
