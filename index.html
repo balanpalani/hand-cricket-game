@@ -65,6 +65,9 @@
   .pick-state { min-height:22px; font-weight:800; color:var(--blue); }
   .auto-badge { display:inline-flex; align-items:center; gap:6px; padding:7px 11px; border-radius:999px; background:#e8f8f1; color:#087f5b; font-size:12px; font-weight:800; }
   .number:focus-visible,.btn:focus-visible { outline:3px solid #a8c4ff; outline-offset:2px; }
+  /* Keyboard-only mode */
+  button, .number { pointer-events:none; }
+  .toss-choice, #tossA, #tossB { display:none !important; }
   .play-area { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
   .player-tag { display:inline-block; border-radius:99px; padding:6px 10px; background:#edf1f8; font-size:13px; font-weight:800; margin:3px 0 12px; }
   .event { font-weight:800; }
@@ -110,13 +113,13 @@
         <div class="field"><label for="teamBCount">Number of players</label><input id="teamBCount" type="number" min="1" max="20" value="3"></div>
       </div>
     </div>
-    <p class="hint">Prototype note: both teams take turns on the same device. Each player is out after 3 consecutive strikes.</p>
+    <p class="hint">Keyboard only: Team A uses top-row keys 1–6; Team B uses NumPad 1–6. Press Enter to continue. Each player is out after 3 consecutive strikes.</p>
     <button class="btn green" id="startBtn">Continue to toss →</button>
   </section>
 
   <section id="toss" class="panel hidden">
     <h2>🪙 Odd / Even toss</h2>
-    <p id="tossIntro">Team A chooses Odd or Even. The other team gets the opposite choice.</p>
+    <p id="tossIntro">Press O for Odd or E for Even. Then Team A uses top-row 1–6 and Team B uses NumPad 1–6 to choose toss numbers.</p>
     <div class="grid">
       <div class="team-card">
         <h3 id="tossTeamTitle">Team A, choose odd or even</h3>
@@ -128,7 +131,7 @@
       </div>
       <div class="team-card">
         <h3>Pick your toss number</h3>
-        <p class="hint">Both teams choose a number from 1 to 6. If the sum matches Team A's chosen parity, Team A wins; otherwise Team B wins.</p>
+        <p class="hint">Team A: top-row 1–6. Team B: NumPad 1–6. Press Enter after both numbers are chosen.</p>
         <div class="field"><label for="tossA">Team A number</label><select id="tossA"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select></div>
         <div class="field"><label for="tossB">Team B number</label><select id="tossB"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select></div>
         <button class="btn" id="tossBtn" disabled>Flip toss</button>
@@ -161,7 +164,7 @@
     </section>
     <section class="panel">
       <h2>🎮 Simultaneous showdown</h2>
-      <p class="hint">Both players choose independently using their own side. Your selected number stays hidden. When both picks are locked, the result appears and the next ball starts automatically after 2 seconds.</p>
+      <p class="hint">Keyboard only: Batter uses top-row 1–6; Bowler uses NumPad 1–6. Your selected number stays hidden. When both picks are locked, the result appears and the next ball starts automatically after 2 seconds.</p>
       <div class="play-area">
         <div class="team-card">
           <h3>🏏 Batter</h3>
@@ -179,7 +182,7 @@
       <div class="status" id="turnResult">Both players: choose a number at the same time. Picks stay hidden until both are locked in.</div>
       <div class="choice-row">
         <span class="auto-badge">⚡ Automatic next ball in 2 seconds</span>
-        <button class="btn red" id="restartBtn">Restart match</button>
+        <span class="hint">Press R to restart</span>
       </div>
     </section>
     <section class="panel">
@@ -216,6 +219,7 @@
   let innings = 1, strikeStreak = 0, batterPick = null, bowlerPick = null;
   let tossDone = false, gameOver = false, logItems = [];
   let resolving = false, ballTimer = null;
+  let tossNumAChosen = false, tossNumBChosen = false;
 
   const show = id => $(id).classList.remove('hidden');
   const hide = id => $(id).classList.add('hidden');
@@ -237,6 +241,7 @@
     teams = []; tossParity = null; tossWinner = 0; batting = 0; bowling = 1;
     innings = 1; strikeStreak = 0; batterPick = null; bowlerPick = null;
     tossDone = false; gameOver = false; logItems = []; resolving = false;
+    tossNumAChosen = false; tossNumBChosen = false;
     if (ballTimer) clearTimeout(ballTimer); ballTimer = null;
     $('turnResult').textContent = 'Both players: choose a number at the same time. Picks stay hidden until both are locked in.';
     ['setup','toss','choose','game','result'].forEach(hide); show('setup');
@@ -418,10 +423,79 @@
     }
   }
 
-  $('restartBtn').addEventListener('click', () => {
+  const restartBtn = $('restartBtn');
+  if (restartBtn) restartBtn.addEventListener('click', () => {
     if (confirm('Restart this match? All current scores will be lost.')) resetMatch();
   });
   $('playAgainBtn').addEventListener('click', resetMatch);
+
+  // Keyboard-only controls:
+  // Setup: edit fields with keyboard, then press Enter while not editing a field.
+  // Toss: O=Odd, E=Even; Team A top-row 1-6; Team B NumPad 1-6; Enter confirms.
+  // Toss winner choice: B=bat first, W=bowl first.
+  // Gameplay: Batter top-row 1-6; Bowler NumPad 1-6. R restarts; Enter on results resets.
+  document.addEventListener('keydown', (e) => {
+    if (e.repeat) return;
+    const key = e.key.toLowerCase();
+    const top = /^[1-6]$/.test(e.key) && /^Digit[1-6]$/.test(e.code);
+    const pad = /^Numpad[1-6]$/.test(e.code);
+    const num = top ? Number(e.key) : (pad ? Number(e.code.slice(-1)) : null);
+
+    if (!$('setup').classList.contains('hidden')) {
+      if (e.key === 'Enter' && !['teamAName','teamACount','teamBName','teamBCount'].includes(document.activeElement?.id)) {
+        e.preventDefault(); $('startBtn').click();
+      }
+      return;
+    }
+
+    if (!$('toss').classList.contains('hidden')) {
+      if (!tossParity && (key === 'o' || key === 'e')) {
+        e.preventDefault();
+        tossParity = key === 'o' ? 'Odd' : 'Even';
+        $('tossSelection').textContent = `${teams[0].name} selected ${tossParity}. ${teams[1].name} gets ${tossParity === 'Odd' ? 'Even' : 'Odd'}. Now choose toss numbers.`;
+        $('tossBtn').disabled = false;
+        return;
+      }
+      if (num !== null && top && !tossNumAChosen) {
+        e.preventDefault(); $('tossA').value = String(num); tossNumAChosen = true;
+        $('tossSelection').textContent += ` Team A number locked: ${num}.`;
+        return;
+      }
+      if (num !== null && pad && !tossNumBChosen) {
+        e.preventDefault(); $('tossB').value = String(num); tossNumBChosen = true;
+        $('tossSelection').textContent += ` Team B number locked: ${num}.`;
+        return;
+      }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (!tossDone && tossParity && tossNumAChosen && tossNumBChosen) $('tossBtn').click();
+        else if (tossDone) $('batFirstBtn').click();
+        return;
+      }
+      return;
+    }
+
+    if (!$('choose').classList.contains('hidden')) {
+      if (key === 'b') { e.preventDefault(); $('batFirst').click(); }
+      else if (key === 'w') { e.preventDefault(); $('bowlFirst').click(); }
+      return;
+    }
+
+    if (!$('game').classList.contains('hidden')) {
+      if (key === 'r') { e.preventDefault(); resetMatch(); return; }
+      if (num !== null) {
+        e.preventDefault();
+        if (top) chooseNumber('batter', num);
+        else if (pad) chooseNumber('bowler', num);
+      }
+      return;
+    }
+
+    if (!$('result').classList.contains('hidden') && e.key === 'Enter') {
+      e.preventDefault(); resetMatch();
+    }
+  });
+
   resetMatch();
 })();
 </script>
