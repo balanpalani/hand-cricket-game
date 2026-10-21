@@ -89,6 +89,37 @@
     .number-grid { gap:6px; }
     .number { padding:13px 0; }
   }
+
+  /* Extra polished arcade styling */
+  body { background:radial-gradient(circle at 12% 0%,#d9e6ff 0,transparent 30%),radial-gradient(circle at 90% 12%,#ffe5e9 0,transparent 28%),linear-gradient(180deg,#f6f8ff,#eef2fb); }
+  .wrap { max-width:1120px; }
+  header { padding:25px 18px 23px; border-radius:26px; color:#fff; background:linear-gradient(120deg,#101b3a,#244b9b 60%,#6b5bd2); box-shadow:0 18px 42px #172c6530; position:relative; overflow:hidden; }
+  header:after { content:'⚾'; position:absolute; right:5%; top:-28px; font-size:150px; opacity:.09; transform:rotate(-20deg); pointer-events:none; }
+  header .logo { display:inline-grid; place-items:center; width:66px; height:66px; border-radius:20px; background:#ffffff20; box-shadow:inset 0 0 0 1px #ffffff35; }
+  header .subtitle { color:#e0e8ff; }
+  .panel { border-radius:22px; border-color:#e1e7f5; box-shadow:0 14px 36px #14213d0d; }
+  .team-card { box-shadow:0 5px 15px #14213d08; }
+  .scorebox { position:relative; overflow:hidden; }
+  .scorebox.active { box-shadow:0 8px 22px #246bfd1a; }
+  .scorebox.active:after { content:'BATTING'; position:absolute; top:12px; right:12px; border-radius:99px; padding:5px 8px; font-size:10px; letter-spacing:.8px; font-weight:900; color:#fff; background:var(--blue); }
+  .score { font-variant-numeric:tabular-nums; }
+  .number { box-shadow:0 6px 14px #14213d0d; }
+  .number-grid .number:not(:disabled) { background:linear-gradient(180deg,#fff,#f5f8ff); }
+  .play-area .team-card:first-child { box-shadow:0 9px 25px #246bfd10; }
+  .play-area .team-card:last-child { box-shadow:0 9px 25px #e94f6410; }
+  .status { border-radius:16px; }
+  .result-reveal { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:12px; margin-bottom:10px; }
+  .reveal-pick { border-radius:14px; padding:12px; background:#ffffffc9; border:1px solid #dce5f6; text-align:center; }
+  .reveal-pick small { display:block; color:var(--muted); font-weight:800; text-transform:uppercase; letter-spacing:.7px; font-size:10px; }
+  .reveal-pick strong { display:block; font-size:32px; line-height:1.25; margin-top:3px; }
+  .versus { font-weight:1000; color:#8a95aa; }
+  .result-message { font-weight:850; font-size:15px; }
+  .log li:first-child { color:#14213d; font-weight:800; }
+  .player-tag { border:1px solid #e1e7f1; }
+  .auto-badge { box-shadow:0 4px 12px #19a97416; }
+  footer { padding:10px; }
+  @media(max-width:650px) { header { padding:22px 14px; } header:after { right:-12px; font-size:110px; } .result-reveal { gap:6px; } .reveal-pick { padding:9px 5px; } .reveal-pick strong { font-size:27px; } }
+
 </style>
 </head>
 <body>
@@ -113,13 +144,13 @@
         <div class="field"><label for="teamBCount">Number of players</label><input id="teamBCount" type="number" min="1" max="20" value="3"></div>
       </div>
     </div>
-    <p class="hint">Keyboard only: Team A uses top-row keys 1–6; Team B uses A, S, D, F, G, H (mapped to 1–6). Press Enter to continue. Each player is out after 3 consecutive strikes.</p>
+    <p class="hint">Keyboard controls: Team A uses top-row 1–6; Team B uses A/S/D/F/G/H or NumPad 1–6. Press Enter to continue.</p>
     <button class="btn green" id="startBtn">Continue to toss →</button>
   </section>
 
   <section id="toss" class="panel hidden">
     <h2>🪙 Odd / Even toss</h2>
-    <p id="tossIntro">Press O for Odd or E for Even. Then Team A uses top-row 1–6 and Team B uses NumPad 1–6 to choose toss numbers.</p>
+    <p id="tossIntro">Press O for Odd or E for Even. Team A uses top-row 1–6; Team B uses A/S/D/F/G/H or NumPad 1–6. Toss picks stay hidden until both players have chosen.</p>
     <div class="grid">
       <div class="team-card">
         <h3 id="tossTeamTitle">Team A, choose odd or even</h3>
@@ -131,7 +162,7 @@
       </div>
       <div class="team-card">
         <h3>Pick your toss number</h3>
-        <p class="hint">Team A: top-row 1–6. Team B: A, S, D, F, G, H = 1–6. Press Enter after both numbers are chosen.</p>
+        <p class="hint">Team A: top-row 1–6. Team B: A/S/D/F/G/H or NumPad 1–6. Press Enter after both numbers are chosen.</p>
         <div class="field"><label for="tossA">Team A number</label><select id="tossA"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select></div>
         <div class="field"><label for="tossB">Team B number</label><select id="tossB"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select></div>
         <button class="btn" id="tossBtn" disabled>Flip toss</button>
@@ -164,7 +195,7 @@
     </section>
     <section class="panel">
       <h2>🎮 Simultaneous showdown</h2>
-      <p class="hint">Keyboard only: Batter uses top-row 1–6; Bowler uses A, S, D, F, G, H (mapped to 1–6). Your selected number stays hidden. When both picks are locked, the result appears and the next ball starts automatically after 2 seconds.</p>
+      <p class="hint">Choose at the same time. Both numbers stay hidden until both picks are locked, then the numbers and result reveal together. Next ball starts automatically after 2 seconds.</p>
       <div class="play-area">
         <div class="team-card">
           <h3>🏏 Batter</h3>
@@ -198,17 +229,6 @@
     <button class="btn green" id="playAgainBtn">Play again</button>
   </section>
 
-  <section class="panel">
-    <h2>📘 Rules</h2>
-    <div class="rules">
-      <div class="rule"><strong>🟢 Normal score</strong>Different numbers, unless a strike pair: add the batter's number only.</div>
-      <div class="rule"><strong>🟰 Same number</strong>Both numbers count. Example: 4 and 4 = 8 runs.</div>
-      <div class="rule"><strong>🔴 Strike</strong>Bowler picks batter number −1 or +1. Special wrap: batter 1 / bowler 6 is also a strike.</div>
-      <div class="rule"><strong>3 strikes in a row</strong>That batter is out. The strike counter resets for the next batter.</div>
-      <div class="rule"><strong>Reset streak</strong>If the turn is not a strike, the consecutive strike counter resets to zero.</div>
-      <div class="rule"><strong>Innings end</strong>When all players on the batting team are out. Each team gets one innings.</div>
-    </div>
-  </section>
   <footer>Made as a browser prototype • Works on desktop and mobile • No account or server required</footer>
 </div>
 <script>
@@ -263,6 +283,8 @@
     $('tossSelection').textContent = 'Choose Odd or Even.';
     $('tossResult').classList.add('hidden'); hide('tossAction');
     $('tossBtn').disabled = true;
+    tossParity = null; tossDone = false; tossNumAChosen = false; tossNumBChosen = false;
+    $('tossA').value = '1'; $('tossB').value = '1';
   });
 
   document.querySelectorAll('[data-parity]').forEach(btn => btn.addEventListener('click', () => {
@@ -351,6 +373,10 @@
     if (batterPick!==null && bowlerPick!==null) resolveBall();
   }
 
+  function showBallReveal(b, w, messageHtml) {
+    $('turnResult').innerHTML = `<div class="result-reveal"><div class="reveal-pick"><small>🏏 Batter chose</small><strong>${b}</strong></div><div class="versus">VS</div><div class="reveal-pick"><small>⚾ Bowler chose</small><strong>${w}</strong></div></div><div class="result-message">${messageHtml}</div>`;
+  }
+
   function resolveBall() {
     if (resolving || batterPick===null || bowlerPick===null || gameOver) return;
     resolving = true;
@@ -360,21 +386,21 @@
     if (b===w) {
       team.score += b+w; strikeStreak=0;
       msg=`${team.name} — ${batter.name}: same number ${b}; +${b+w} runs.`;
-      $('turnResult').innerHTML = `<span class="event runs">🟢 SAME NUMBER! ${b} + ${w} = ${b+w} runs.</span>`;
+      showBallReveal(b, w, `<span class="event runs">🟢 SAME NUMBER! ${b} + ${w} = ${b+w} runs.</span>`);
     } else if (strikePair(b,w)) {
       strikeStreak++;
       msg=`${team.name} — ${batter.name}: strike ${strikeStreak}/3 (${b} vs ${w}); no runs.`;
       if (strikeStreak>=3) {
         batter.out=true; team.outCount++; strikeStreak=0;
         msg += ` ${batter.name} is OUT!`;
-        $('turnResult').innerHTML = `<span class="event strike">🔴 STRIKE OUT! ${b} vs ${w}. ${batter.name} is OUT after 3 consecutive strikes.</span>`;
+        showBallReveal(b, w, `<span class="event strike">🔴 STRIKE OUT! ${batter.name} is OUT after 3 consecutive strikes.</span>`);
       } else {
-        $('turnResult').innerHTML = `<span class="event strike">🔴 STRIKE! ${b} vs ${w}. No runs • streak ${strikeStreak}/3.</span>`;
+        showBallReveal(b, w, `<span class="event strike">🔴 STRIKE! No runs • streak ${strikeStreak}/3.</span>`);
       }
     } else {
       team.score += b; strikeStreak=0;
       msg=`${team.name} — ${batter.name}: no strike; +${b} run${b===1?'':'s'}.`;
-      $('turnResult').innerHTML = `<span class="event runs">🏃 SAFE! Batter scores ${b} run${b===1?'':'s'}.</span>`;
+      showBallReveal(b, w, `<span class="event runs">🏃 SAFE! Batter scores ${b} run${b===1?'':'s'}.</span>`);
     }
     addLog(msg);
     renderGame();
@@ -431,17 +457,18 @@
 
   // Keyboard-only controls:
   // Setup: edit fields with keyboard, then press Enter while not editing a field.
-  // Toss: O=Odd, E=Even; Team A top-row 1-6; Team B A/S/D/F/G/H = 1-6; Enter confirms.
+  // Toss: O=Odd, E=Even; Team A top-row 1-6; Team B A/S/D/F/G/H or Numpad 1-6 = 1-6; Enter confirms.
   // Toss winner choice: B=bat first, W=bowl first.
-  // Gameplay: Batter top-row 1-6; Bowler A/S/D/F/G/H = 1-6. R restarts; Enter on results resets.
+  // Gameplay: Batter top-row 1-6; Bowler A/S/D/F/G/H or Numpad 1-6 = 1-6. R restarts; Enter on results resets.
   document.addEventListener('keydown', (e) => {
     if (e.repeat) return;
     const key = e.key.toLowerCase();
     const top = /^[1-6]$/.test(e.key) && /^Digit[1-6]$/.test(e.code);
-    // Use A/S/D/F/G/H for the second player so laptops without a numpad work too.
+    const pad = /^Numpad[1-6]$/.test(e.code);
+    // Bowler can use either A/S/D/F/G/H or the numeric keypad.
     const bowlerKeys = { a:1, s:2, d:3, f:4, g:5, h:6 };
     const secondPlayer = Object.prototype.hasOwnProperty.call(bowlerKeys, key);
-    const num = top ? Number(e.key) : (secondPlayer ? bowlerKeys[key] : null);
+    const num = top ? Number(e.key) : (pad ? Number(e.code.slice(-1)) : (secondPlayer ? bowlerKeys[key] : null));
 
     if (!$('setup').classList.contains('hidden')) {
       if (e.key === 'Enter' && !['teamAName','teamACount','teamBName','teamBCount'].includes(document.activeElement?.id)) {
@@ -460,12 +487,12 @@
       }
       if (num !== null && top && !tossNumAChosen) {
         e.preventDefault(); $('tossA').value = String(num); tossNumAChosen = true;
-        $('tossSelection').textContent += ' Team A number locked (hidden).';
+        $('tossSelection').textContent = `${teams[0].name} toss number locked. Waiting for ${teams[1].name}.`; 
         return;
       }
-      if (num !== null && secondPlayer && !tossNumBChosen) {
+      if (num !== null && (secondPlayer || pad) && !tossNumBChosen) {
         e.preventDefault(); $('tossB').value = String(num); tossNumBChosen = true;
-        $('tossSelection').textContent += ' Team B number locked (hidden).';
+        $('tossSelection').textContent = `${teams[1].name} toss number locked. Waiting for ${teams[0].name}.`; 
         return;
       }
       if (e.key === 'Enter') {
@@ -488,7 +515,7 @@
       if (num !== null) {
         e.preventDefault();
         if (top) chooseNumber('batter', num);
-        else if (secondPlayer) chooseNumber('bowler', num);
+        else if (secondPlayer || pad) chooseNumber('bowler', num);
       }
       return;
     }
