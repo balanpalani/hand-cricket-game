@@ -119,6 +119,14 @@
   .auto-badge { box-shadow:0 4px 12px #19a97416; }
   footer { padding:10px; }
   @media(max-width:650px) { header { padding:22px 14px; } header:after { right:-12px; font-size:110px; } .result-reveal { gap:6px; } .reveal-pick { padding:9px 5px; } .reveal-pick strong { font-size:27px; } }
+  .ball-result-panel { margin:0 0 16px; padding:18px; text-align:center; border:2px solid #cbd7ee; border-radius:20px; background:linear-gradient(135deg,#fff,#eef4ff); box-shadow:0 12px 28px #14213d12; min-height:84px; }
+  .ball-result-panel .result-reveal { max-width:560px; margin:0 auto 10px; }
+  .ball-result-panel .reveal-pick { background:#fff; box-shadow:0 4px 12px #14213d0a; }
+  .ball-result-panel .result-message { font-size:clamp(17px,2.5vw,22px); line-height:1.4; }
+  .ball-result-panel.strike-result { border-color:#f0a8b1; background:linear-gradient(135deg,#fff7f8,#ffe7eb); }
+  .ball-result-panel.runs-result { border-color:#9adfc5; background:linear-gradient(135deg,#f6fffb,#ddf8ed); }
+  .ball-result-panel.waiting-result { color:var(--muted); }
+  @media(max-width:650px) { .ball-result-panel { padding:13px 9px; } .ball-result-panel .result-message { font-size:16px; } }
 
 </style>
 </head>
@@ -182,6 +190,7 @@
   </section>
 
   <section id="game" class="hidden">
+    <div class="ball-result-panel status waiting-result" id="turnResult">🎯 Ball result will appear here after both players choose.</div>
     <section class="panel">
       <div class="scoreboard">
         <div id="scoreABox" class="scorebox"><div class="score-label" id="scoreALabel">Team A</div><div class="score" id="scoreA">0</div><div class="small" id="scoreAInfo">0 / 3 players out</div></div>
@@ -210,7 +219,6 @@
           <p class="hint pick-state" id="bowlerPickHint">Choose secretly • waiting for your pick</p>
         </div>
       </div>
-      <div class="status" id="turnResult">Both players: choose a number at the same time. Picks stay hidden until both are locked in.</div>
       <div class="choice-row">
         <span class="auto-badge">⚡ Automatic next ball in 2 seconds</span>
         <span class="hint">Press R to restart</span>
@@ -374,7 +382,10 @@
   }
 
   function showBallReveal(b, w, messageHtml) {
-    $('turnResult').innerHTML = `<div class="result-reveal"><div class="reveal-pick"><small>🏏 Batter chose</small><strong>${b}</strong></div><div class="versus">VS</div><div class="reveal-pick"><small>⚾ Bowler chose</small><strong>${w}</strong></div></div><div class="result-message">${messageHtml}</div>`;
+    const panel = $('turnResult');
+    panel.classList.remove('waiting-result', 'strike-result', 'runs-result');
+    panel.classList.add(messageHtml.includes('event strike') ? 'strike-result' : 'runs-result');
+    panel.innerHTML = `<div class="result-reveal"><div class="reveal-pick"><small>🏏 Batter chose</small><strong>${b}</strong></div><div class="versus">VS</div><div class="reveal-pick"><small>⚾ Bowler chose</small><strong>${w}</strong></div></div><div class="result-message">${messageHtml}</div>`;
   }
 
   function resolveBall() {
@@ -416,7 +427,9 @@
       if (allOut(batting)) {
         finishInnings(); return;
       }
-      $('turnResult').textContent = 'New ball! Both players choose a number at the same time. Picks stay hidden until both are locked in.';
+      $('turnResult').classList.remove('strike-result', 'runs-result');
+      $('turnResult').classList.add('waiting-result');
+      $('turnResult').textContent = '🎯 New ball! Both players choose. The numbers and result will appear here.';
       renderGame();
     }, 2000);
   }
