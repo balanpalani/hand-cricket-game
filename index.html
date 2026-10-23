@@ -472,7 +472,7 @@
   // Setup: edit fields with keyboard, then press Enter while not editing a field.
   // Toss: O=Odd, E=Even; Team A top-row 1-6; Team B A/S/D/F/G/H or Numpad 1-6 = 1-6; Enter confirms.
   // Toss winner choice: B=bat first, W=bowl first.
-  // Gameplay: Batter top-row 1-6; Bowler A/S/D/F/G/H or Numpad 1-6 = 1-6. R restarts; Enter on results resets.
+  // Gameplay: Team A ALWAYS uses top-row 1-6; Team B ALWAYS uses A/S/D/F/G/H or Numpad 1-6, whether batting or bowling. R restarts; Enter on results resets.
   document.addEventListener('keydown', (e) => {
     if (e.repeat) return;
     const key = e.key.toLowerCase();
@@ -525,10 +525,17 @@
 
     if (!$('game').classList.contains('hidden')) {
       if (key === 'r') { e.preventDefault(); resetMatch(); return; }
+      // Keyboard controls belong to the team, not the current role.
+      // Team A always uses the top-row 1-6; Team B always uses A/S/D/F/G/H or Numpad 1-6.
+      // When innings swap, the role (batter/bowler) swaps automatically, but key positions do not.
       if (num !== null) {
-        e.preventDefault();
-        if (top) chooseNumber('batter', num);
-        else if (secondPlayer || pad) chooseNumber('bowler', num);
+        if (top) {
+          e.preventDefault();
+          chooseNumber(batting === 0 ? 'batter' : 'bowler', num);
+        } else if (secondPlayer || pad) {
+          e.preventDefault();
+          chooseNumber(batting === 1 ? 'batter' : 'bowler', num);
+        }
       }
       return;
     }
